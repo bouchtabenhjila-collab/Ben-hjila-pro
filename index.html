@@ -28,7 +28,7 @@ input,select{width:100%;padding:12px;margin:8px 0;border:2px solid #ddd;border-r
 .table{width:100%;border-collapse:collapse}
 .table th{background:#34495e;color:white;padding:12px;text-align:left;font-size:14px}
 .table td{padding:12px;border-bottom:1px solid #eee;font-size:14px;vertical-align:middle}
-.badge-danger{background:#doc;color:#e74c3c;font-weight:bold;padding:4px 8px;border-radius:4px}
+.badge-danger{background:#fde8e8;color:#e74c3c;font-weight:bold;padding:4px 8px;border-radius:4px}
 @media(max-width:768px){.grid-2{grid-template-columns:1fr}}
 </style>
 </head>
@@ -163,7 +163,7 @@ input,select{width:100%;padding:12px;margin:8px 0;border:2px solid #ddd;border-r
         <h2>Suivi des Pleins Gasoil / Carburant</h2>
         <div class="grid-2">
             <div>
-                <input type="text" id="vehicule" placeholder="Matricule Véhicule / Numéro Engin">
+                <input type="text" id="vehicule" placeholder="Matricule Véحicule / Numéro Engin">
                 <input type="number" id="litres" placeholder="Volume ravitaillé (En Litres)">
                 <input type="number" id="km" placeholder="Kilométrage Actuel au compteur">
                 <button class="btn btn-blue" onclick="addGasoil()">⛽ Enregistrer le Plein</button>
@@ -207,11 +207,14 @@ function getNowString() {
     return d.toLocaleDateString('fr-FR') + ' à ' + d.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
 }
 
-// --- Système de Navigation des Onglets ---
+// --- نظام التنقل المصلح والمضمون ---
 function showTab(tabId) {
+    // إخفاء جميع الكروت أولاً
     document.querySelectorAll('.card').forEach(c => c.classList.remove('show'));
+    // إزالة اللون الأخضر من كل الأزرار
     document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
     
+    // إظهار الكرت المطلوب وتلوين الزر الخاص به
     document.getElementById(tabId).classList.add('show');
     document.getElementById('btn-' + tabId).classList.add('active');
     
@@ -424,11 +427,4 @@ function exportExcel() {
     let link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", "Rapport_General_BenHjila.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-// --- Export PDF Structuré ---
-function exportPDF() {
- 
+    document.body.appendChild(link)
