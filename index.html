@@ -3,128 +3,165 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BenHjila - Gestion Stock</title>
+<title>BenHjila - Gestion Stock PRO</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',Arial;background:#e8f0fe}
-.header{background:#2c3e50;color:white;padding:20px;text-align:center}
-.nav{display:flex;background:#34495e}
-.nav button{flex:1;padding:15px;background:transparent;border:none;color:white;cursor:pointer;font-size:16px}
+body{font-family:'Segoe UI',Arial;background:#f0f4f8}
+.header{background:linear-gradient(135deg,#1e3c72,#2a5298);color:white;padding:20px;text-align:center}
+.nav{display:flex;background:#2c3e50;overflow-x:auto}
+.nav button{flex:1;min-width:110px;padding:14px;background:transparent;border:none;color:white;cursor:pointer;font-size:13px;white-space:nowrap}
 .nav button.active{background:#27ae60}
-.container{max-width:700px;margin:20px auto;padding:0 15px}
-.card{background:white;padding:25px;border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,0.1);margin-bottom:15px;display:none}
+.container{max-width:1100px;margin:20px auto;padding:0 15px}
+.card{background:white;padding:25px;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.1);margin-bottom:20px;display:none}
 .card.active{display:block}
-input,select{width:100%;padding:12px;margin:8px 0;border:2px solid #ddd;border-radius:6px;font-size:15px}
-.btn{background:#27ae60;color:white;border:none;padding:14px;border-radius:6px;cursor:pointer;font-size:16px;width:100%;margin-top:10px;font-weight:bold}
-.btn:hover{background:#219a52}
-.btn-danger{background:#e74c3c}
-.produit{display:flex;justify-content:space-between;align-items:center;background:#f8f9fa;padding:15px;margin:8px 0;border-radius:8px;border-left:4px solid #27ae60}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0}
-.stat{background:#3498db;color:white;padding:20px;border-radius:8px;text-align:center}
-.stat h3{font-size:28px;margin-bottom:5px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+input,select,textarea{width:100%;padding:12px;margin:8px 0;border:2px solid #ddd;border-radius:8px;font-size:15px}
+.btn{background:#27ae60;color:white;border:none;padding:14px 18px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:bold;margin:5px}
+.btn-blue{background:#3498db}.btn-red{background:#e74c3c}.btn-orange{background:#f39c12}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:20px 0}
+.stat{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:20px;border-radius:10px;text-align:center}
+.stat h3{font-size:30px}
+.table{width:100%;border-collapse:collapse;margin-top:15px;font-size:14px}
+.table th{background:#34495e;color:white;padding:12px;text-align:left}
+.table td{padding:10px;border-bottom:1px solid #eee}
+.badge{padding:4px 8px;border-radius:15px;font-size:11px;font-weight:bold;color:white}
+.badge-green{background:#2ecc71}.badge-red{background:#e74c3c}.badge-orange{background:#f39c12}
+.barcode{margin:10px 0}
+@media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
 <div class="header">
-<h1>BenHjila - Gestion de Stock</h1>
-<p>برنامج إدارة قطع الغيار</p>
+<h1>BenHjila - Gestion Stock PRO</h1>
+<p>Stocks | Pointage | Gasoil | Entrée/Sortie | Code Barre</p>
 </div>
 
 <div class="nav">
-<button class="active" onclick="showTab('dash')">Tableau de bord</button>
-<button onclick="showTab('ajout')">Ajouter</button>
-<button onclick="showTab('liste')">Produits</button>
+<button class="active" onclick="showTab('dash')">Dashboard</button>
+<button onclick="showTab('produits')">Produits</button>
+<button onclick="showTab('entree')">Entrée</button>
+<button onclick="showTab('sortie')">Sortie</button>
+<button onclick="showTab('pointage')">Pointage</button>
+<button onclick="showTab('gasoil')">Gasoil</button>
+<button onclick="showTab('codebarre')">Code Barre</button>
 </div>
 
 <div class="container">
 
+<!-- DASHBOARD -->
 <div id="dash" class="card active">
-<h2>Tableau de bord</h2>
-<p>Bienvenue dans votre application</p>
+<h2>Dashboard</h2>
 <div class="stats">
-<div class="stat"><h3 id="totalProd">0</h3><div>Total Produits</div></div>
-<div class="stat"><h3 id="totalQte">0</h3><div>Total Quantité</div></div>
+<div class="stat"><h3 id="sProduits">0</h3><div>Produits</div></div>
+<div class="stat"><h3 id="sEntree">0</h3><div>Entrées</div></div>
+<div class="stat"><h3 id="sSortie">0</h3><div>Sorties</div></div>
+<div class="stat"><h3 id="sGasoil">0 L</h3><div>Gasoil</div></div>
+<div class="stat"><h3 id="sAlertes">0</h3><div>Alertes</div></div>
 </div>
+<button class="btn btn-blue" onclick="exportExcel()">📊 Export Excel</button>
+<button class="btn btn-red" onclick="exportPDF()">📄 Export PDF</button>
 </div>
 
-<div id="ajout" class="card">
-<h2>Ajouter produit</h2>
-<input type="text" id="nom" placeholder="Nom de la pièce">
-<input type="number" id="qte" placeholder="Quantité">
+<!-- PRODUITS -->
+<div id="produits" class="card">
+<h2>Gestion Produits</h2>
+<div class="grid-2">
+<div>
+<h3>Ajouter/Modifier</h3>
+<input type="hidden" id="editIdx">
+<input type="text" id="nom" placeholder="Nom produit">
+<input type="text" id="ref" placeholder="Référence/Code barre">
+<select id="cat">
+<option>Catégorie</option>
+<option>Pièces</option>
+<option>Gasoil</option>
+<option>Huile</option>
+<option>Accessoires</option>
+</select>
+<input type="number" id="qte" placeholder="Quantité stock">
 <input type="number" id="prix" placeholder="Prix unitaire MAD">
-<button class="btn" onclick="ajouter()">Ajouter au stock</button>
+<input type="number" id="seuil" placeholder="Seuil alerte">
+<button class="btn" onclick="saveProd()">💾 Enregistrer</button>
+</div>
+<div>
+<h3>Recherche</h3>
+<input type="text" id="search" placeholder="🔍 Chercher..." onkeyup="afficherProduits()">
+</div>
+</div>
+<table class="table">
+<thead><tr><th>Nom</th><th>Réf</th><th>Cat</th><th>Qté</th><th>Prix</th><th>Action</th></tr></thead>
+<tbody id="listeProd"></tbody>
+</table>
 </div>
 
-<div id="liste" class="card">
-<h2>Liste des produits</h2>
-<div id="listeProduits"></div>
-<button class="btn btn-danger" onclick="viderStock()">Vider tout le stock</button>
+<!-- ENTREE -->
+<div id="entree" class="card">
+<h2>Entrée Stock</h2>
+<div class="grid-2">
+<div>
+<select id="entreeProd"></select>
+<input type="number" id="entreeQte" placeholder="Quantité entrée">
+<input type="text" id="entreeFour" placeholder="Fournisseur">
+<input type="date" id="entreeDate">
+<button class="btn btn-blue" onclick="addEntree()">➕ Valider Entrée</button>
+</div>
+<div>
+<h3>Historique Entrées</h3>
+<table class="table"><thead><tr><th>Date</th><th>Produit</th><th>Qté</th><th>Fournisseur</th></tr></thead>
+<tbody id="histEntree"></tbody></table>
+</div>
+</div>
 </div>
 
+<!-- SORTIE -->
+<div id="sortie" class="card">
+<h2>Sortie Stock</h2>
+<div class="grid-2">
+<div>
+<select id="sortieProd"></select>
+<input type="number" id="sortieQte" placeholder="Quantité sortie">
+<input type="text" id="sortieClient" placeholder="Client/Destination">
+<input type="date" id="sortieDate">
+<button class="btn btn-orange" onclick="addSortie()">➖ Valider Sortie</button>
+</div>
+<div>
+<h3>Historique Sorties</h3>
+<table class="table"><thead><tr><th>Date</th><th>Produit</th><th>Qté</th><th>Client</th></tr></thead>
+<tbody id="histSortie"></tbody></table>
+</div>
+</div>
 </div>
 
-<script>
-let produits = JSON.parse(localStorage.getItem('benhjilaStock')) || [];
+<!-- POINTAGE -->
+<div id="pointage" class="card">
+<h2>Pointage Inventaire</h2>
+<button class="btn" onclick="demarrerPointage()">📋 Démarrer Pointage</button>
+<div id="zonePointage"></div>
+<button class="btn btn-blue" onclick="exportPointagePDF()">📄 Exporter Pointage PDF</button>
+</div>
 
-function showTab(tab){
-  document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
-  document.getElementById(tab).classList.add('active');
-  event.target.classList.add('active');
-  afficher();
-}
+<!-- GASOIL -->
+<div id="gasoil" class="card">
+<h2>Gestion Gasoil</h2>
+<div class="grid-2">
+<div>
+<h3>Ajouter Gasoil</h3>
+<input type="number" id="gasoilQte" placeholder="Quantité en Litres">
+<input type="number" id="gasoilPrix" placeholder="Prix/Litre MAD">
+<input type="date" id="gasoilDate">
+<button class="btn" onclick="addGasoil()">⛽ Ajouter</button>
+</div>
+<div>
+<h3>Consommation</h3>
+<table class="table"><thead><tr><th>Date</th><th>Qté L</th><th>Prix/L</th><th>Total</th></tr></thead>
+<tbody id="histGasoil"></tbody></table>
+</div>
+</div>
+</div>
 
-function afficher(){
-  let div = document.getElementById('listeProduits');
-  let totalProd = produits.length;
-  let totalQte = produits.reduce((s,p)=>s+parseInt(p.qte||0),0);
-  
-  document.getElementById('totalProd').textContent = totalProd;
-  document.getElementById('totalQte').textContent = totalQte;
-  
-  if(produits.length==0){
-    div.innerHTML='<p style="text-align:center;color:#999">Aucun produit dans le stock</p>';
-    return;
-  }
-  
-  div.innerHTML = produits.map((p,i)=>`
-    <div class="produit">
-      <div><b>${p.nom}</b><br><small>Qté: ${p.qte} | Prix: ${p.prix} MAD</small></div>
-      <button onclick="supprimer(${i})" style="background:#e74c3c;color:white;border:none;padding:8px 12px;border-radius:5px;cursor:pointer">Supprimer</button>
-    </div>
-  `).join('');
-}
-
-function ajouter(){
-  let nom = document.getElementById('nom').value.trim();
-  let qte = document.getElementById('qte').value;
-  let prix = document.getElementById('prix').value;
-  if(!nom || !qte){alert('Remplir nom et quantité');return}
-  produits.push({nom,qte,prix:prix||0});
-  localStorage.setItem('benhjilaStock',JSON.stringify(produits));
-  document.getElementById('nom').value='';
-  document.getElementById('qte').value='';
-  document.getElementById('prix').value='';
-  showTab('liste');
-}
-
-function supprimer(i){
-  if(confirm('Supprimer ce produit?')){
-    produits.splice(i,1);
-    localStorage.setItem('benhjilaStock',JSON.stringify(produits));
-    afficher();
-  }
-}
-
-function viderStock(){
-  if(confirm('Vider tout le stock?')){
-    produits=[];
-    localStorage.setItem('benhjilaStock',JSON.stringify(produits));
-    afficher();
-  }
-}
-afficher();
-</script>
-</body>
-  </html>
+<!-- CODE BARRE -->
+<div
