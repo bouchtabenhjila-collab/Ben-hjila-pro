@@ -3,34 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BenHjila - Gestion Stock PRO</title>
+<title>BenHjila - Gestion Stock</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',Arial;background:#f0f4f8}
-.header{background:linear-gradient(135deg,#1e3c72,#2a5298);color:white;padding:20px;text-align:center}
-.nav{display:flex;background:#2c3e50;overflow-x:auto}
-.nav button{flex:1;min-width:110px;padding:14px;background:transparent;border:none;color:white;cursor:pointer;font-size:13px;white-space:nowrap}
+.header{background:#2c3e50;color:white;padding:20px;text-align:center}
+.nav{display:flex;background:#34495e;flex-wrap:wrap}
+.nav button{flex:1;min-width:100px;padding:14px;background:transparent;border:none;color:white;cursor:pointer;font-size:13px}
 .nav button.active{background:#27ae60}
 .container{max-width:1100px;margin:20px auto;padding:0 15px}
 .card{background:white;padding:25px;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.1);margin-bottom:20px;display:none}
-.card.active{display:block}
-.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.card.show{display:block}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
-input,select,textarea{width:100%;padding:12px;margin:8px 0;border:2px solid #ddd;border-radius:8px;font-size:15px}
+input,select{width:100%;padding:12px;margin:8px 0;border:2px solid #ddd;border-radius:8px;font-size:15px}
 .btn{background:#27ae60;color:white;border:none;padding:14px 18px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:bold;margin:5px}
 .btn-blue{background:#3498db}.btn-red{background:#e74c3c}.btn-orange{background:#f39c12}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:20px 0}
-.stat{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:20px;border-radius:10px;text-align:center}
+.stat{background:#3498db;color:white;padding:20px;border-radius:10px;text-align:center}
 .stat h3{font-size:30px}
-.table{width:100%;border-collapse:collapse;margin-top:15px;font-size:14px}
+.table{width:100%;border-collapse:collapse;margin-top:15px}
 .table th{background:#34495e;color:white;padding:12px;text-align:left}
 .table td{padding:10px;border-bottom:1px solid #eee}
-.badge{padding:4px 8px;border-radius:15px;font-size:11px;font-weight:bold;color:white}
-.badge-green{background:#2ecc71}.badge-red{background:#e74c3c}.badge-orange{background:#f39c12}
-.barcode{margin:10px 0}
-@media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -41,7 +37,7 @@ input,select,textarea{width:100%;padding:12px;margin:8px 0;border:2px solid #ddd
 </div>
 
 <div class="nav">
-<button class="active" onclick="showTab('dash')">Dashboard</button>
+<button onclick="showTab('dash')">Dashboard</button>
 <button onclick="showTab('produits')">Produits</button>
 <button onclick="showTab('entree')">Entrée</button>
 <button onclick="showTab('sortie')">Sortie</button>
@@ -52,116 +48,50 @@ input,select,textarea{width:100%;padding:12px;margin:8px 0;border:2px solid #ddd
 
 <div class="container">
 
-<!-- DASHBOARD -->
-<div id="dash" class="card active">
+<div id="dash" class="card show">
 <h2>Dashboard</h2>
 <div class="stats">
 <div class="stat"><h3 id="sProduits">0</h3><div>Produits</div></div>
 <div class="stat"><h3 id="sEntree">0</h3><div>Entrées</div></div>
 <div class="stat"><h3 id="sSortie">0</h3><div>Sorties</div></div>
 <div class="stat"><h3 id="sGasoil">0 L</h3><div>Gasoil</div></div>
-<div class="stat"><h3 id="sAlertes">0</h3><div>Alertes</div></div>
 </div>
 <button class="btn btn-blue" onclick="exportExcel()">📊 Export Excel</button>
 <button class="btn btn-red" onclick="exportPDF()">📄 Export PDF</button>
 </div>
 
-<!-- PRODUITS -->
 <div id="produits" class="card">
 <h2>Gestion Produits</h2>
 <div class="grid-2">
 <div>
-<h3>Ajouter/Modifier</h3>
 <input type="hidden" id="editIdx">
 <input type="text" id="nom" placeholder="Nom produit">
 <input type="text" id="ref" placeholder="Référence/Code barre">
-<select id="cat">
-<option>Catégorie</option>
-<option>Pièces</option>
-<option>Gasoil</option>
-<option>Huile</option>
-<option>Accessoires</option>
-</select>
-<input type="number" id="qte" placeholder="Quantité stock">
-<input type="number" id="prix" placeholder="Prix unitaire MAD">
+<select id="cat"><option>Catégorie</option><option>Pièces</option><option>Gasoil</option><option>Huile</option></select>
+<input type="number" id="qte" placeholder="Quantité">
+<input type="number" id="prix" placeholder="Prix MAD">
 <input type="number" id="seuil" placeholder="Seuil alerte">
 <button class="btn" onclick="saveProd()">💾 Enregistrer</button>
 </div>
 <div>
-<h3>Recherche</h3>
 <input type="text" id="search" placeholder="🔍 Chercher..." onkeyup="afficherProduits()">
+<table class="table"><thead><tr><th>Nom</th><th>Qté</th><th>Action</th></tr></thead>
+<tbody id="listeProd"></tbody></table>
 </div>
 </div>
-<table class="table">
-<thead><tr><th>Nom</th><th>Réf</th><th>Cat</th><th>Qté</th><th>Prix</th><th>Action</th></tr></thead>
-<tbody id="listeProd"></tbody>
-</table>
 </div>
 
-<!-- ENTREE -->
 <div id="entree" class="card">
 <h2>Entrée Stock</h2>
-<div class="grid-2">
-<div>
 <select id="entreeProd"></select>
 <input type="number" id="entreeQte" placeholder="Quantité entrée">
 <input type="text" id="entreeFour" placeholder="Fournisseur">
-<input type="date" id="entreeDate">
 <button class="btn btn-blue" onclick="addEntree()">➕ Valider Entrée</button>
-</div>
-<div>
-<h3>Historique Entrées</h3>
-<table class="table"><thead><tr><th>Date</th><th>Produit</th><th>Qté</th><th>Fournisseur</th></tr></thead>
+<table class="table"><thead><tr><th>Produit</th><th>Qté</th><th>Fournisseur</th></tr></thead>
 <tbody id="histEntree"></tbody></table>
 </div>
-</div>
-</div>
 
-<!-- SORTIE -->
 <div id="sortie" class="card">
 <h2>Sortie Stock</h2>
-<div class="grid-2">
-<div>
 <select id="sortieProd"></select>
-<input type="number" id="sortieQte" placeholder="Quantité sortie">
-<input type="text" id="sortieClient" placeholder="Client/Destination">
-<input type="date" id="sortieDate">
-<button class="btn btn-orange" onclick="addSortie()">➖ Valider Sortie</button>
-</div>
-<div>
-<h3>Historique Sorties</h3>
-<table class="table"><thead><tr><th>Date</th><th>Produit</th><th>Qté</th><th>Client</th></tr></thead>
-<tbody id="histSortie"></tbody></table>
-</div>
-</div>
-</div>
-
-<!-- POINTAGE -->
-<div id="pointage" class="card">
-<h2>Pointage Inventaire</h2>
-<button class="btn" onclick="demarrerPointage()">📋 Démarrer Pointage</button>
-<div id="zonePointage"></div>
-<button class="btn btn-blue" onclick="exportPointagePDF()">📄 Exporter Pointage PDF</button>
-</div>
-
-<!-- GASOIL -->
-<div id="gasoil" class="card">
-<h2>Gestion Gasoil</h2>
-<div class="grid-2">
-<div>
-<h3>Ajouter Gasoil</h3>
-<input type="number" id="gasoilQte" placeholder="Quantité en Litres">
-<input type="number" id="gasoilPrix" placeholder="Prix/Litre MAD">
-<input type="date" id="gasoilDate">
-<button class="btn" onclick="addGasoil()">⛽ Ajouter</button>
-</div>
-<div>
-<h3>Consommation</h3>
-<table class="table"><thead><tr><th>Date</th><th>Qté L</th><th>Prix/L</th><th>Total</th></tr></thead>
-<tbody id="histGasoil"></tbody></table>
-</div>
-</div>
-</div>
-
-<!-- CODE BARRE -->
-<div
+<input type="number" id="sortieQte" placeholder
