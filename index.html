@@ -1,1 +1,412 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BenHjila - Gestion Stock PRO</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8}
+.header{background:#2c3e50;color:white;padding:20px;text-align:center}
+.nav{display:flex;background:#34495e;flex-wrap:wrap}
+.nav button{flex:1;min-width:100px;padding:14px;background:transparent;border:none;color:white;cursor:pointer;font-size:13px;transition:0.3s}
+.nav button.active{background:#27ae60;font-weight:bold}
+.container{max-width:1100px;margin:20px auto;padding:0 15px}
+.card{background:white;padding:25px;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.1);margin-bottom:20px;display:none}
+.card.show{display:block}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+input,select{width:100%;padding:12px;margin:8px 0;border:2px solid #ddd;border-radius:8px;font-size:15px}
+.btn{background:#27ae60;color:white;border:none;padding:14px 18px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:bold;margin:5px;transition:0.2s}
+.btn:hover{opacity:0.9}
+.btn-blue{background:#3498db}.btn-red{background:#e74c3c}.btn-orange{background:#f39c12}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:20px 0}
+.stat{background:#3498db;color:white;padding:20px;border-radius:10px;text-align:center}
+.stat h3{font-size:30px;margin-bottom:5px}
+.table-container{overflow-x:auto;margin-top:15px}
+.table{width:100%;border-collapse:collapse}
+.table th{background:#34495e;color:white;padding:12px;text-align:left;font-size:14px}
+.table td{padding:12px;border-bottom:1px solid #eee;font-size:14px;vertical-align:middle}
+.badge-danger{background:#fde8e8;color:#e74c3c;font-weight:bold;padding:4px 8px;border-radius:4px}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
 
+<div class="header">
+<h1>BenHjila - Gestion Stock PRO</h1>
+<p>Système Intégré | Stocks, Pointage, Gasoil & Code Barre</p>
+</div>
+
+<div class="nav">
+<button data-tab="dash" id="btn-dash" class="tab-trigger active">Dashboard</button>
+<button data-tab="produits" id="btn-produits" class="tab-trigger">Produits</button>
+<button data-tab="entree" id="btn-entree" class="tab-trigger">Entrées</button>
+<button data-tab="sortie" id="btn-sortie" class="tab-trigger">Sorties</button>
+<button data-tab="pointage" id="btn-pointage" class="tab-trigger">Pointage</button>
+<button data-tab="gasoil" id="btn-gasoil" class="tab-trigger">Gasoil</button>
+<button data-tab="codebarre" id="btn-codebarre" class="tab-trigger">Code Barre</button>
+</div>
+
+<div class="container">
+
+    <div id="dash" class="card show">
+        <h2>Tableau de Bord (Live)</h2>
+        <div class="stats">
+            <div class="stat"><h3 id="sProduits">0</h3><div>Articles Réf.</div></div>
+            <div class="stat" style="background:#2ecc71"><h3 id="sEntree">0</h3><div>Total Entrées</div></div>
+            <div class="stat" style="background:#e67e22"><h3 id="sSortie">0</h3><div>Total Sorties</div></div>
+            <div class="stat" style="background:#9b59b6"><h3 id="sGasoil">0 L</h3><div>Conso. Gasoil</div></div>
+        </div>
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+        <button class="btn btn-blue" id="btn-export-excel">📊 Exporter les Données (Excel/CSV)</button>
+        <button class="btn btn-red" id="btn-export-pdf">📄 Générer Rapport d'État (PDF)</button>
+    </div>
+
+    <div id="produits" class="card">
+        <h2>Gestion des Produits (Catalogue)</h2>
+        <div class="grid-2">
+            <div>
+                <input type="hidden" id="editIdx">
+                <input type="text" id="nom" placeholder="Nom du produit / Article">
+                <input type="text" id="ref" placeholder="Référence unique (ou scanner Code Barre)">
+                <select id="cat">
+                    <option value="">Sélectionner une Catégorie</option>
+                    <option value="Pièces">Pièces de rechange</option>
+                    <option value="Gasoil">Gasoil / Carburant</option>
+                    <option value="Huile">Huiles & Lubrifiants</option>
+                    <option value="Outillage">Outillage</option>
+                </select>
+                <input type="number" id="qte" placeholder="Quantité Initiale">
+                <input type="number" id="prix" placeholder="Prix Unitaire (MAD)">
+                <input type="number" id="seuil" placeholder="Seuil d'alerte critique (Ex: 5)">
+                <button class="btn" id="btn-save-prod">💾 Enregistrer l'Article</button>
+            </div>
+            <div>
+                <input type="text" id="search" placeholder="🔍 Rechercher un produit par nom ou Ref...">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Désignation & Réf</th><th>Stock</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="listeProd"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="entree" class="card">
+        <h2>Bon d'Entrée Stock (Approvisionnement)</h2>
+        <select id="entreeProd"></select>
+        <input type="number" id="entreeQte" placeholder="Quantité ajoutée au stock">
+        <input type="text" id="entreeFour" placeholder="Nom du Fournisseur">
+        <button class="btn btn-blue" id="btn-add-entree">➕ Valider le Bon d'Entrée</button>
+        
+        <h3 style="margin-top:25px;">Historique des Entrées</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr><th>Date & Heure</th><th>Produit</th><th>Quantité</th><th>Fournisseur</th></tr>
+                </thead>
+                <tbody id="histEntree"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="sortie" class="card">
+        <h2>Bon de Sortie Stock (Affectation)</h2>
+        <select id="sortieProd"></select>
+        <input type="number" id="sortieQte" placeholder="Quantité à sortir">
+        <input type="text" id="sortieDest" placeholder="Destination (Engin, Matricule, Chantier)">
+        <button class="btn btn-orange" id="btn-add-sortie">➖ Valider le Bon de Sortie</button>
+        
+        <h3 style="margin-top:25px;">Historique des Sorties</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr><th>Date & Heure</th><th>Produit</th><th>Quantité</th><th>Destination</th></tr>
+                </thead>
+                <tbody id="histSortie"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="pointage" class="card">
+        <h2>Régistre de Pointage du Personnel</h2>
+        <div class="grid-2">
+            <div>
+                <input type="text" id="nomPers" placeholder="Nom complet de l'employé">
+                <input type="text" id="postePers" placeholder="Poste / Rôle (Chauffeur, Mécanicien...)">
+                <select id="statutPers">
+                    <option value="Présent">Présent</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Retard">Retard</option>
+                </select>
+                <button class="btn" id="btn-add-pointage">🕒 Enregistrer le Pointage</button>
+            </div>
+            <div>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Date & Heure</th><th>Employé</th><th>Poste</th><th>Statut</th></tr>
+                        </thead>
+                        <tbody id="listePointage"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="gasoil" class="card">
+        <h2>Suivi des Pleins Gasoil / Carburant</h2>
+        <div class="grid-2">
+            <div>
+                <input type="text" id="vehicule" placeholder="Matricule Véhicule / Numéro Engin">
+                <input type="number" id="litres" placeholder="Volume ravitaillé (En Litres)">
+                <input type="number" id="km" placeholder="Kilométrage Actuel au compteur">
+                <button class="btn btn-blue" id="btn-add-gasoil">⛽ Enregistrer le Plein</button>
+            </div>
+            <div>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Date & Heure</th><th>Véhicule/Engin</th><th>Litres</th><th>KM Compteur</th></tr>
+                        </thead>
+                        <tbody id="listeGasoil"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="codebarre" class="card">
+        <h2>Générateur d'Étiquettes Codes-Barres</h2>
+        <p style="color:#7f8c8d; margin-bottom:15px;">Sélectionnez un produit pour générer instantanément son code-barres standard CODE128.</p>
+        <select id="cbProd"></select>
+        <div style="text-align:center; margin:30px 0; background:#fff; padding:30px; border:2px dashed #bdc3c7; border-radius:12px;">
+            <svg id="barcode"></svg>
+        </div>
+        <button class="btn btn-blue" id="btn-print-barcode">🖨️ Imprimer l'Étiquette</button>
+    </div>
+
+</div>
+
+<script>
+// --- Chargement initial sécurisé منذ البداية ---
+let produits = JSON.parse(localStorage.getItem('bh_produits')) || [];
+let entrees = JSON.parse(localStorage.getItem('bh_entrees')) || [];
+let signatories = JSON.parse(localStorage.getItem('bh_sorties')) || []; // مصلحة
+let pointages = JSON.parse(localStorage.getItem('bh_pointages')) || [];
+let gasoil = JSON.parse(localStorage.getItem('bh_gasoil')) || [];
+
+function getNowString() {
+    let d = new Date();
+    return d.toLocaleDateString('fr-FR') + ' à ' + d.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+}
+
+// --- نظام تحريك الأزرار الجديد والمحمي من التجميد 100% ---
+document.querySelectorAll('.tab-trigger').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        let targetTab = this.getAttribute('data-tab');
+        
+        // إخفاء الكروت وتغيير الأزرار بشكل صريح
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('show'));
+        document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(targetTab).classList.add('show');
+        this.classList.add('active');
+        
+        if(targetTab === 'codebarre') genererCodeBarre();
+    });
+});
+
+function saveAll() {
+    localStorage.setItem('bh_produits', JSON.stringify(produits));
+    localStorage.setItem('bh_entrees', JSON.stringify(entrees));
+    localStorage.setItem('bh_sorties', JSON.stringify(signatories));
+    localStorage.setItem('bh_pointages', JSON.stringify(pointages));
+    localStorage.setItem('bh_gasoil', JSON.stringify(gasoil));
+    initApp();
+}
+
+function initApp() {
+    renderDashboard();
+    afficherProduits();
+    recupSelects();
+    renderHistoriques();
+}
+
+function renderDashboard() {
+    document.getElementById('sProduits').innerText = produits.length;
+    document.getElementById('sEntree').innerText = entrees.length;
+    document.getElementById('sSortie').innerText = signatories.length;
+    let totalGasoil = gasoil.reduce((acc, curr) => acc + parseFloat(curr.litres || 0), 0);
+    document.getElementById('sGasoil').innerText = totalGasoil + " L";
+}
+
+function saveProd() {
+    let idx = document.getElementById('editIdx').value;
+    let prod = {
+        nom: document.getElementById('nom').value.trim(),
+        ref: document.getElementById('ref').value.trim(),
+        cat: document.getElementById('cat').value,
+        qte: parseFloat(document.getElementById('qte').value) || 0,
+        prix: parseFloat(document.getElementById('prix').value) || 0,
+        seuil: parseFloat(document.getElementById('seuil').value) || 0
+    };
+
+    if(!prod.nom || !prod.ref) return alert("Erreur: Le Nom et la Référence sont obligatoires !");
+
+    if(idx === "") {
+        produits.push(prod);
+    } else {
+        produits[idx] = prod;
+        document.getElementById('editIdx').value = "";
+    }
+
+    document.getElementById('nom').value = '';
+    document.getElementById('ref').value = '';
+    document.getElementById('cat').value = '';
+    document.getElementById('qte').value = '';
+    document.getElementById('prix').value = '';
+    document.getElementById('seuil').value = '';
+
+    saveAll();
+}
+
+function afficherProduits() {
+    let search = document.getElementById('search').value.toLowerCase();
+    let html = "";
+    produits.forEach((p, idx) => {
+        if(p.nom.toLowerCase().includes(search) || p.ref.toLowerCase().includes(search)) {
+            let isAlerte = p.qte <= p.seuil;
+            let rowStyle = isAlerte ? "background-color: #fdf2f2;" : "";
+            let qteDisplay = isAlerte ? `<span class="badge-danger">${p.qte} (Alerte)</span>` : p.qte;
+            
+            html += `<tr style="${rowStyle}">
+                <td><strong>${p.nom}</strong><br><small style="color:#7f8c8d">Ref: ${p.ref} | Cat: ${p.cat || 'N/A'}</small></td>
+                <td>${qteDisplay}</td>
+                <td>
+                    <button class="btn btn-blue" style="padding:6px 10px; font-size:12px;" onclick="editProd(${idx})">✏️</button>
+                    <button class="btn btn-red" style="padding:6px 10px; font-size:12px;" onclick="deleteProd(${idx})">🗑️</button>
+                </td>
+            </tr>`;
+        }
+    });
+    document.getElementById('listeProd').innerHTML = html;
+}
+
+window.editProd = function(idx) {
+    let p = produits[idx];
+    document.getElementById('editIdx').value = idx;
+    document.getElementById('nom').value = p.nom;
+    document.getElementById('ref').value = p.ref;
+    document.getElementById('cat').value = p.cat;
+    document.getElementById('qte').value = p.qte;
+    document.getElementById('prix').value = p.prix;
+    document.getElementById('seuil').value = p.seuil;
+};
+
+window.deleteProd = function(idx) {
+    if(confirm("Supprimer cet article ?")) {
+        produits.splice(idx, 1);
+        saveAll();
+    }
+};
+
+function recupSelects() {
+    let options = produits.map((p, idx) => `<option value="${idx}">${p.nom} (Ref: ${p.ref})</option>`).join('');
+    document.getElementById('entreeProd').innerHTML = options || '<option value="">Aucun produit</option>';
+    document.getElementById('sortieProd').innerHTML = options || '<option value="">Aucun produit</option>';
+    document.getElementById('cbProd').innerHTML = options || '<option value="">Aucun produit</option>';
+}
+
+function addEntree() {
+    let idx = document.getElementById('entreeProd').value;
+    let qte = parseFloat(document.getElementById('entreeQte').value) || 0;
+    let four = document.getElementById('entreeFour').value.trim() || "Inconnu";
+    if(idx === "" || qte <= 0) return alert("Quantité invalide");
+    produits[idx].qte += qte;
+    entrees.unshift({ date: getNowString(), nom: produits[idx].nom, qte: qte, four: four });
+    document.getElementById('entreeQte').value = "";
+    document.getElementById('entreeFour').value = "";
+    saveAll();
+}
+
+function addSortie() {
+    let idx = document.getElementById('sortieProd').value;
+    let qte = parseFloat(document.getElementById('sortieQte').value) || 0;
+    let dest = document.getElementById('sortieDest').value.trim() || "Non spécifié";
+    if(idx === "" || qte <= 0) return alert("Quantité invalide");
+    if(produits[idx].qte < qte) return alert("Stock insuffisant !");
+    produits[idx].qte -= qte;
+    signatories.unshift({ date: getNowString(), nom: produits[idx].nom, qte: qte, dest: dest });
+    document.getElementById('sortieQte').value = "";
+    document.getElementById('sortieDest').value = "";
+    saveAll();
+}
+
+function addPointage() {
+    let nom = document.getElementById('nomPers').value.trim();
+    let poste = document.getElementById('postePers').value.trim();
+    let statut = document.getElementById('statutPers').value;
+    if(!nom || !poste) return alert("Champs obligatoires");
+    pointages.unshift({ date: getNowString(), nom: nom, poste: poste, statut: statut });
+    document.getElementById('nomPers').value = "";
+    document.getElementById('postePers').value = "";
+    saveAll();
+}
+
+function addGasoil() {
+    let vehicule = document.getElementById('vehicule').value.trim();
+    let litres = parseFloat(document.getElementById('litres').value) || 0;
+    let km = document.getElementById('km').value.trim() || "0";
+    if(!vehicule || litres <= 0) return alert("Données invalides");
+    gasoil.unshift({ date: getNowString(), vehicule: vehicule, litres: litres, km: km });
+    document.getElementById('vehicule').value = "";
+    document.getElementById('litres').value = "";
+    document.getElementById('km').value = "";
+    saveAll();
+}
+
+function renderHistoriques() {
+    document.getElementById('histEntree').innerHTML = entrees.map(e => `<tr><td><small>${e.date}</small></td><td><strong>${e.nom}</strong></td><td>+${e.qte}</td><td>${e.four}</td></tr>`).join('');
+    document.getElementById('histSortie').innerHTML = signatories.map(s => `<tr><td><small>${s.date}</small></td><td><strong>${s.nom}</strong></td><td>-${s.qte}</td><td>${s.dest}</td></tr>`).join('');
+    document.getElementById('listePointage').innerHTML = pointages.map(p => `<tr><td><small>${p.date}</small></td><td><strong>${p.nom}</strong></td><td>${p.poste}</td><td>${p.statut}</td></tr>`).join('');
+    document.getElementById('listeGasoil').innerHTML = gasoil.map(g => `<tr><td><small>${g.date}</small></td><td><strong>${g.vehicule}</strong></td><td>${g.litres} L</td><td>${g.km} KM</td></tr>`).join('');
+}
+
+function genererCodeBarre() {
+    let idx = document.getElementById('cbProd').value;
+    if(idx !== "" && produits[idx]) {
+        JsBarcode("#barcode", produits[idx].ref, { format: "CODE128", lineColor: "#2c3e50", width: 2.5, height: 70, displayValue: true });
+    }
+}
+
+// --- ربط أزرار الإدخال والتقارير بالنظام الجديد ---
+document.getElementById('btn-save-prod').addEventListener('click', saveProd);
+document.getElementById('btn-add-entree').addEventListener('click', addEntree);
+document.getElementById('btn-add-sortie').addEventListener('click', addSortie);
+document.getElementById('btn-add-pointage').addEventListener('click', addPointage);
+document.getElementById('btn-add-gasoil').addEventListener('click', addGasoil);
+document.getElementById('cbProd').addEventListener('change', genererCodeBarre);
+document.getElementById('btn-print-barcode').addEventListener('click', () => window.print());
+document.getElementById('search').addEventListener('keyup', afficherProduits);
+
+document.getElementById('btn-export-excel').addEventListener('click', function() {
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFFType Registre;Date;Designation;Details/Infos;Quantite/Statut\n";
+    produits.forEach(p => csvContent += `Catalogue Stock;N/A;${p.nom};Ref: ${p.ref};${p.qte}\n`);
+    let encodedUri = encodeURI(csvContent);
+    let link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "Rapport_BenHjila.csv");
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+});
+
+document.getElementById('btn-export-pdf').addEventListener('click', function() {
+    const { jsPDF } = window.jspdf; const doc = new jsPDF();
+    doc.setFontSize(16); doc.text("BENHJILA - GESTION STOCK", 14, 20);
+    doc.setFontSize(10); doc.text("Généré le : " + getNowString(), 14, 28);
+    let y = 40;
+    produits.forEach(p => { doc.text(`• ${p.nom} (Ref: ${p.ref}) : ${p.qte} units`, 14, y); y += 8; });
+    doc.save("Rapport_Stock.p
