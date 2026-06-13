@@ -1,1 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BenHjila Stock</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial;background:#f5f5f5}
+.header{background:#2c3e50;color:white;padding:20px;text-align:center}
+.menu{display:flex;background:#34495e}
+.menu button{flex:1;padding:15px;background:#34495e;border:none;color:white;font-size:15px;cursor:pointer}
+.menu button:hover{background:#27ae60}
+.box{max-width:900px;margin:20px auto;padding:15px}
+.page{background:white;padding:25px;border-radius:10px;display:none}
+.page.active{display:block}
+input,select{width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:5px}
+.btn{background:#27ae60;color:white;border:none;padding:12px 20px;border-radius:5px;cursor:pointer;margin:5px;font-size:15px}
+.btn:hover{background:#219a52}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th{background:#34495e;color:white;padding:10px;text-align:left}
+td{padding:10px;border-bottom:1px solid #ddd}
+</style>
+<script>
+let db = JSON.parse(localStorage.getItem('stockBenhjila')) || {produits:[],entrees:[],sorties:[]};
 
+function showTab(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  chargerTout();
+}
+
+function save(){localStorage.setItem('stockBenhjila',JSON.stringify(db));chargerTout()}
+
+function ajouterProd(){
+  let nom=document.getElementById('nom').value;
+  let ref=document.getElementById('ref').value;
+  let qte=parseInt(document.getElementById('qte').value)||0;
+  let prix=parseFloat(document.getElementById('prix').value)||0;
+  if(!nom){alert('كتب اسم المنتج');return}
+  db.produits.push({nom,ref,qte,prix});
